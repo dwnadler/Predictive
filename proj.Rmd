@@ -1,0 +1,79 @@
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a
+large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement: a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.
+
+## Introduction 
+This project uses data from accelerometers on the belt, forearm, arm, and dumbell of 6
+participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. They were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: "exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C) , lowering the dumbbell only halfway (Class D) and throwing the hips to the front" (Class E).
+
+1. The goal of our project is to predict the manner in which they did the exercise.
+2. The "classe" variable in the training set is the outcome variable.
+3. There are variables to predict the "classe" with.
+
+## Libraries
+```{r}
+library (caret)
+library (rpart)
+library (ggplot2)
+library (rpart.plot)
+library (rattle)
+library (randomForest)
+library (corrplot)
+library (partykit)
+```
+
+## Data Exploration
+```{r}
+trainingdata<-read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv" , header=TRUE)
+testcases<-read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", header=TRUE)
+#Checking the Dimension of the Data files.
+dim (trainingdata)
+dim(testcases)
+```
+
+Looking at the dimensions, we see that there are total of 19,622 observations in the trainingdata and 20 in the testcases. There are total of 160 different variables, and the variable "classe" is going to be the outcome variable. Before that, I want to reduce the number of variables that have near zero values (NZV)in both trainingdata, and testcases.
+
+```{r}
+NZV<-nearZeroVar (trainingdata)
+trainingdata<-trainingdata[, - NZV]
+testcases<-testcases[, - NZV]
+head(testcases)
+str(testcases)
+```
+
+Variables 1-5 appear related to ID variables. These will be removed with the following code (along with NA values):
+```{r}
+trainingdata<-trainingdata[, - (1 :5)]
+testcases<-testcases[, - (1 : 5)]
+
+NAs<- sapply (trainingdata, function (x) mean (is.na (x))) >0.95
+trainingdata<-trainingdata[, NAs==FALSE]
+testcases<-testcases[, NAs==FALSE]
+```
+
+
+```{r}
+Matrixcor<-cor (trainingdata[, - 54])
+corrplot (Matrixcor, type= "lower" , order= "FPC" , method= "color" , tl.cex=0.5)
+```
+
+# Training, Testing, & Validation
+```{r}
+TrainD<-createDataPartition (trainingdata$classe, p=0.6 , list=FALSE)
+trainingset<-trainingdata[TrainD, ]
+testset<-trainingdata[- TrainD, ]
+dim (trainingset)
+dim(testset)
+```
+
+#Model Fitness
+```{r}
+set.seed(123)
+modell<-rpart(classe~., data=trainingset, method= "class" )
+fancyRpartPlot(modell)
+```
+
+```{r}
+valid <- predict(modell, newdata = testcases)
+valid
+```

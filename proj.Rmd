@@ -31,7 +31,7 @@ dim (trainingdata)
 dim(testcases)
 ```
 
-Looking at the dimensions, we see that there are total of 19,622 observations in the trainingdata and 20 in the testcases. There are total of 160 different variables, and the variable "classe" is going to be the outcome variable. Before that, I want to reduce the number of variables that have near zero values (NZV)in both trainingdata, and testcases.
+Looking at the dimensions, we see that there are total of 19,622 observations in the trainingdata and 20 in the testcases. There are total of 160 different variables, and the variable "classe" is going to be the outcome variable. Before that, let's reduce the number of variables that have near zero values (NZV)in both trainingdata, and testcases.
 
 ```{r}
 NZV<-nearZeroVar (trainingdata)
@@ -50,7 +50,9 @@ NAs<- sapply (trainingdata, function (x) mean (is.na (x))) >0.95
 trainingdata<-trainingdata[, NAs==FALSE]
 testcases<-testcases[, NAs==FALSE]
 ```
+We have reduced the number of variables in this model from 160 to 54. 
 
+A correlation will be conducted here to determine if there are any more variables that can be dropped.
 
 ```{r}
 Matrixcor<-cor (trainingdata[, - 54])
@@ -58,6 +60,7 @@ corrplot (Matrixcor, type= "lower" , order= "FPC" , method= "color" , tl.cex=0.5
 ```
 
 # Training, Testing, & Validation
+The following code trains the data and tests them as well. We find a total of 11,776 observations in the training set and 7,846 in the test set.
 ```{r}
 TrainD<-createDataPartition (trainingdata$classe, p=0.6 , list=FALSE)
 trainingset<-trainingdata[TrainD, ]
@@ -67,12 +70,20 @@ dim(testset)
 ```
 
 #Model Fitness
+Here we conduct a model on the training set. We see the different number of trees and interaction depths involved below. We now need to plot the predicted results from the test set using this model fitness.
 ```{r}
 set.seed(123)
 modell<-rpart(classe~., data=trainingset, method= "class" )
 fancyRpartPlot(modell)
 ```
 
+```{r}
+premod -> predict(model1, testset, type="class")
+ctree <- confusionMatrix(premod, as.factor(testset$classe))
+ctree
+```
+
+The algorithm performs well from these results. Below we conclude with the passing of the model on the validation set.
 ```{r}
 valid <- predict(modell, newdata = testcases)
 valid
